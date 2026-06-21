@@ -133,14 +133,21 @@
       box-shadow: inset 0 0 0 2px rgba(231, 200, 107, 0.8), 0 0 18px rgba(231, 200, 107, 0.22);
     }
 
-    .swatch {
+    .swatch,
+    .item-icon {
       position: absolute;
-      left: 11px;
-      top: 9px;
+      left: 50%;
+      top: 8px;
       width: 32px;
       height: 32px;
-      border-radius: 4px;
-      box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.16), inset 0 -8px 0 rgba(0, 0, 0, 0.16);
+      border-radius: 5px;
+      transform: translateX(-50%);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.2), transparent 36%),
+        linear-gradient(315deg, rgba(0,0,0,0.24), transparent 42%),
+        var(--c);
+      box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.13), inset 0 -8px 0 rgba(0, 0, 0, 0.18);
+      overflow: hidden;
     }
 
     .key {
@@ -242,15 +249,10 @@
       box-shadow: inset 0 0 0 2px rgba(231, 200, 107, 0.75);
     }
 
-    .item-swatch {
-      position: absolute;
-      left: 50%;
-      top: 6px;
-      width: 30px;
-      height: 30px;
-      border-radius: 4px;
-      transform: translateX(-50%);
-      box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.16), inset 0 -8px 0 rgba(0, 0, 0, 0.16);
+    .item-icon {
+      top: 5px;
+      width: 34px;
+      height: 34px;
     }
 
     .item-number {
@@ -262,6 +264,121 @@
       text-align: center;
       text-overflow: ellipsis;
       white-space: nowrap;
+    }
+
+    .shape-plank {
+      background:
+        repeating-linear-gradient(90deg, transparent 0 7px, rgba(0,0,0,0.22) 7px 8px),
+        repeating-linear-gradient(0deg, transparent 0 12px, rgba(255,255,255,0.14) 12px 13px),
+        var(--c);
+    }
+
+    .shape-log {
+      border-radius: 50%;
+      background:
+        radial-gradient(circle, rgba(255,245,188,0.7) 0 18%, transparent 20%),
+        repeating-radial-gradient(circle, var(--t) 0 4px, var(--c) 4px 8px);
+    }
+
+    .shape-leaf,
+    .shape-plant,
+    .shape-flower {
+      border-radius: 42% 58% 48% 52%;
+      background:
+        radial-gradient(circle at 35% 34%, rgba(255,255,255,0.24) 0 16%, transparent 18%),
+        radial-gradient(circle at 68% 60%, var(--t) 0 28%, transparent 30%),
+        var(--c);
+    }
+
+    .shape-flower::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 5px;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: var(--t);
+      box-shadow: 0 9px 0 rgba(255,255,255,0.18), -7px 5px 0 rgba(255,255,255,0.12), 7px 5px 0 rgba(0,0,0,0.12);
+    }
+
+    .shape-stone {
+      background:
+        linear-gradient(145deg, rgba(255,255,255,0.18), transparent 45%),
+        var(--c);
+      clip-path: polygon(9% 19%, 42% 4%, 90% 22%, 84% 82%, 48% 97%, 12% 77%);
+    }
+
+    .shape-ore {
+      background:
+        radial-gradient(circle at 30% 30%, var(--t) 0 12%, transparent 13%),
+        radial-gradient(circle at 68% 42%, var(--t) 0 10%, transparent 11%),
+        radial-gradient(circle at 50% 72%, var(--t) 0 13%, transparent 14%),
+        linear-gradient(135deg, rgba(255,255,255,0.12), transparent),
+        var(--c);
+    }
+
+    .shape-glass,
+    .shape-water {
+      border: 2px solid rgba(255,255,255,0.38);
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.52) 0 18%, transparent 19% 58%, rgba(255,255,255,0.25) 59% 72%, transparent 73%),
+        var(--c);
+      opacity: 0.82;
+    }
+
+    .shape-candle {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .shape-candle::before {
+      content: "";
+      position: absolute;
+      left: 11px;
+      top: 10px;
+      width: 12px;
+      height: 21px;
+      border-radius: 3px 3px 2px 2px;
+      background: var(--c);
+      box-shadow: inset 3px 0 rgba(255,255,255,0.2), inset -3px 0 rgba(0,0,0,0.18);
+    }
+
+    .shape-candle::after {
+      content: "";
+      position: absolute;
+      left: 13px;
+      top: 1px;
+      width: 9px;
+      height: 13px;
+      border-radius: 50% 50% 42% 42%;
+      background: radial-gradient(circle at 50% 62%, #fff4b8 0 24%, #ffbc40 25% 68%, transparent 70%);
+      filter: drop-shadow(0 0 5px rgba(255,189,66,0.8));
+    }
+
+    .shape-lamp {
+      border-radius: 6px;
+      background:
+        radial-gradient(circle at 50% 50%, var(--t) 0 28%, rgba(255,225,130,0.38) 29% 46%, transparent 47%),
+        linear-gradient(90deg, rgba(0,0,0,0.45) 0 16%, transparent 17% 83%, rgba(0,0,0,0.45) 84%),
+        linear-gradient(0deg, rgba(0,0,0,0.45) 0 15%, transparent 16% 84%, rgba(0,0,0,0.45) 85%),
+        var(--c);
+      box-shadow: 0 0 12px rgba(255, 214, 115, 0.58), inset 0 0 0 2px rgba(0,0,0,0.28);
+    }
+
+    .shape-book,
+    .shape-crate {
+      background:
+        linear-gradient(90deg, rgba(0,0,0,0.3) 0 16%, transparent 17%),
+        repeating-linear-gradient(90deg, var(--c) 0 9px, var(--t) 9px 14px);
+    }
+
+    .shape-lava {
+      background:
+        radial-gradient(circle at 28% 34%, #ffe46a 0 15%, transparent 16%),
+        radial-gradient(circle at 70% 65%, #ffae36 0 18%, transparent 19%),
+        linear-gradient(135deg, #7a1f18, var(--c));
+      box-shadow: 0 0 12px rgba(255,116,33,0.72), inset 0 -8px rgba(0,0,0,0.18);
     }
     .prompt {
       position: absolute;
@@ -516,8 +633,24 @@
         return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
       }
 
+      function shapeForName(name) {
+        if (/candle/.test(name)) return "candle";
+        if (/lamp|lantern|torch|glowing/.test(name)) return "lamp";
+        if (/ore|gem/.test(name)) return "ore";
+        if (/log/.test(name)) return "log";
+        if (/plank|bamboo/.test(name)) return "plank";
+        if (/leaf|leaves|moss/.test(name)) return "leaf";
+        if (/flower|rose|cactus|reed|coral/.test(name)) return "flower";
+        if (/glass|ice/.test(name)) return "glass";
+        if (/water/.test(name)) return "water";
+        if (/lava/.test(name)) return "lava";
+        if (/bookshelf|barrel|crate|crafting/.test(name)) return "crate";
+        if (/stone|slate|granite|diorite|andesite|basalt|obsidian|marble|limestone|cobble|quartz/.test(name)) return "stone";
+        return "cube";
+      }
+
       function block(name, color, top = null, glow = 0) {
-        return { name, color, top: top || color, glow };
+        return { name, color, top: top || color, glow, shape: shapeForName(name) };
       }
 
       const baseBlocks = [
@@ -637,10 +770,16 @@
         block("lava tile", [191, 74, 28], [255, 129, 40], 0.5)
       ];
       const blocks = [null, ...baseBlocks, ...extraBlocks];
+      const blockIds = new Map(blocks.map((item, index) => item ? [item.name, index] : null).filter(Boolean));
+
+      function idOf(name, fallback) {
+        return blockIds.get(name) || fallback;
+      }
 
       const hotbar = [1, 2, 3, 4, 5, 6];
       let selected = 0;
       const world = new Uint8Array(W * D * H);
+      const terrain = new Int16Array(W * D);
       const keys = new Set();
       const player = {
         x: W / 2 + 0.5,
@@ -653,6 +792,14 @@
         pitch: -0.16,
         grounded: false
       };
+      const enemyTypes = [
+        { name: "Moss Creeper", body: [62, 142, 78], eye: [255, 235, 120], speed: 1.1, size: 0.95, mode: "stalk" },
+        { name: "Cave Imp", body: [130, 58, 72], eye: [255, 190, 72], speed: 1.7, size: 0.72, mode: "dart" },
+        { name: "Stone Guard", body: [98, 104, 113], eye: [105, 220, 240], speed: 0.75, size: 1.22, mode: "heavy" },
+        { name: "Glow Wisp", body: [88, 195, 220], eye: [255, 255, 210], speed: 1.45, size: 0.78, mode: "fly" },
+        { name: "Bramble Boar", body: [116, 82, 48], eye: [255, 246, 160], speed: 1.25, size: 1.05, mode: "charge" }
+      ];
+      const enemies = [];
 
       let last = performance.now();
       let frames = 0;
@@ -707,26 +854,142 @@
         return (a + (b - a) * u) + ((c + (d - c) * u) - (a + (b - a) * u)) * v;
       }
 
-      function generateWorld() {
-        for (let x = 0; x < W; x++) {
-          for (let y = 0; y < D; y++) {
-            const hill = smoothNoise(x, y, 13) * 6 + smoothNoise(x + 90, y - 40, 7) * 3;
-            const h = Math.floor(10 + hill);
-            for (let z = 0; z <= h; z++) {
-              const id = z === h ? (h < 12 ? 6 : 1) : (z > h - 4 ? 2 : 3);
-              setBlock(x, y, z, id);
+      function terrainAt(x, y) {
+        x = Math.max(0, Math.min(W - 1, Math.floor(x)));
+        y = Math.max(0, Math.min(D - 1, Math.floor(y)));
+        return terrain[x + y * W] || 0;
+      }
+
+      function highestSolid(x, y) {
+        x = Math.floor(x);
+        y = Math.floor(y);
+        if (x < 0 || x >= W || y < 0 || y >= D) return 0;
+        for (let z = H - 1; z >= 0; z--) {
+          if (getBlock(x, y, z)) return z;
+        }
+        return 0;
+      }
+
+      function placeTree(x, y, h, type) {
+        const trunkId = type === "glow" ? idOf("cherry planks", 4) : type === "pine" ? idOf("spruce planks", 4) : 4;
+        const leafId = type === "blossom" ? idOf("flowering leaves", 5) : type === "pine" ? idOf("pine needles", 5) : type === "moss" ? idOf("moss block", 5) : 5;
+        const trunkHeight = type === "pine" ? 7 : type === "moss" ? 5 : 4 + Math.floor(hash(x, y) * 3);
+        for (let z = h + 1; z <= h + trunkHeight; z++) setBlock(x, y, z, trunkId);
+
+        if (type === "pine") {
+          for (let oz = 2; oz <= trunkHeight + 1; oz++) {
+            const radius = Math.max(1, Math.floor((trunkHeight + 2 - oz) / 2));
+            for (let ox = -radius; ox <= radius; ox++) {
+              for (let oy = -radius; oy <= radius; oy++) {
+                if (Math.abs(ox) + Math.abs(oy) <= radius + 1) setBlock(x + ox, y + oy, h + oz, leafId);
+              }
             }
-            if (hash(x + 11, y - 3) > 0.985 && h > 12) {
-              for (let z = h + 1; z < h + 5; z++) setBlock(x, y, z, 4);
-              for (let ox = -2; ox <= 2; ox++) {
-                for (let oy = -2; oy <= 2; oy++) {
-                  for (let oz = 3; oz <= 5; oz++) {
-                    if (Math.abs(ox) + Math.abs(oy) + Math.abs(oz - 4) < 5 && hash(x + ox, y + oy) > 0.16) {
-                      setBlock(x + ox, y + oy, h + oz, 5);
+          }
+          return;
+        }
+
+        const crown = type === "moss" ? 3 : 2;
+        for (let ox = -crown; ox <= crown; ox++) {
+          for (let oy = -crown; oy <= crown; oy++) {
+            for (let oz = trunkHeight - 2; oz <= trunkHeight + 2; oz++) {
+              const d = Math.abs(ox) + Math.abs(oy) + Math.max(0, Math.abs(oz - trunkHeight) - 1);
+              if (d <= crown + 2 && hash(x + ox * 5, y + oy * 7 + oz) > 0.12) setBlock(x + ox, y + oy, h + oz, leafId);
+            }
+          }
+        }
+
+        if (type === "glow") {
+          setBlock(x + 1, y, h + trunkHeight - 1, idOf("glow lamp", 5));
+          setBlock(x - 1, y + 1, h + trunkHeight, idOf("paper lantern", 5));
+        }
+      }
+
+      function carveCaves() {
+        for (let x = 2; x < W - 2; x++) {
+          for (let y = 2; y < D - 2; y++) {
+            const surface = terrainAt(x, y);
+            for (let z = 4; z < Math.min(surface - 2, H - 3); z++) {
+              const tunnel = Math.sin(x * 0.31 + z * 0.46) + Math.cos(y * 0.27 - z * 0.39);
+              const chamber = smoothNoise(x + z * 2, y - z * 3, 9) + smoothNoise(x - 70, y + z * 2, 15);
+              if (tunnel + chamber > 2.02 || chamber > 1.58) {
+                for (let ox = -1; ox <= 1; ox++) {
+                  for (let oy = -1; oy <= 1; oy++) {
+                    if (Math.abs(ox) + Math.abs(oy) < 3) setBlock(x + ox, y + oy, z, 0);
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        for (let x = 8; x < W - 8; x += 11) {
+          for (let y = 7; y < D - 8; y += 13) {
+            if (hash(x, y) > 0.48) {
+              const z = Math.max(5, Math.min(terrainAt(x, y) - 4, 12));
+              for (let r = 0; r < 4; r++) {
+                for (let ox = -r; ox <= r; ox++) {
+                  for (let oy = -r; oy <= r; oy++) {
+                    for (let oz = -1; oz <= 1; oz++) {
+                      if (Math.hypot(ox, oy, oz * 1.6) <= r + 0.2) setBlock(x + ox, y + oy, z + oz, 0);
                     }
                   }
                 }
               }
+              setBlock(x, y, z - 1, idOf("glow lamp", 3));
+            }
+          }
+        }
+
+        for (let i = 0; i < 9; i++) {
+          const cx = 7 + Math.floor(hash(i * 19, i + 41) * (W - 14));
+          const cy = 7 + Math.floor(hash(i - 13, i * 29) * (D - 14));
+          const surface = terrainAt(cx, cy);
+          const dir = hash(cx, cy) > 0.5 ? 1 : -1;
+          for (let step = 0; step < 7; step++) {
+            const x = cx + step * dir;
+            const y = cy + Math.floor(Math.sin(step * 0.9) * 2);
+            const zBase = surface - Math.floor(step * 0.7);
+            for (let ox = -2; ox <= 2; ox++) {
+              for (let oz = -1; oz <= 2; oz++) {
+                if (Math.abs(ox) + Math.max(0, oz) < 4) setBlock(x, y + ox, zBase + oz, 0);
+              }
+            }
+          }
+        }
+      }
+
+      function generateWorld() {
+        for (let x = 0; x < W; x++) {
+          for (let y = 0; y < D; y++) {
+            const broad = smoothNoise(x, y, 18) * 5;
+            const ridge = Math.abs(smoothNoise(x - 60, y + 25, 9) - 0.5) * 8;
+            const hill = broad + smoothNoise(x + 90, y - 40, 7) * 3 + ridge;
+            const h = Math.max(7, Math.min(H - 8, Math.floor(9 + hill)));
+            terrain[x + y * W] = h;
+            for (let z = 0; z <= h; z++) {
+              const beach = h < 12 || smoothNoise(x + 20, y - 20, 6) < 0.18;
+              const id = z === h ? (beach ? 6 : 1) : (z > h - 4 ? 2 : 3);
+              setBlock(x, y, z, id);
+            }
+          }
+        }
+
+        carveCaves();
+
+        for (let x = 4; x < W - 4; x++) {
+          for (let y = 4; y < D - 4; y++) {
+            const h = highestSolid(x, y);
+            if (h < 12 || h > H - 10) continue;
+            const chance = hash(x + 11, y - 3);
+            if (chance > 0.973) {
+              const typeRoll = hash(x - 17, y + 31);
+              const type = typeRoll > 0.82 ? "glow" : typeRoll > 0.62 ? "blossom" : typeRoll > 0.38 ? "pine" : typeRoll > 0.22 ? "moss" : "oak";
+              placeTree(x, y, h, type);
+            } else if (chance < 0.018 && h > 14) {
+              setBlock(x, y, h + 1, idOf("cactus", 5));
+              setBlock(x, y, h + 2, idOf("cactus", 5));
+            } else if (hash(x + 100, y + 4) > 0.992) {
+              setBlock(x, y, h + 1, idOf("flower pot", 5));
             }
           }
         }
@@ -739,15 +1002,78 @@
         }
       }
 
+      function spawnEnemies() {
+        enemies.length = 0;
+        enemyTypes.forEach((type, typeIndex) => {
+          let placed = 0;
+          for (let attempt = 0; attempt < 80 && placed < 3; attempt++) {
+            const x = 6 + Math.floor(hash(typeIndex * 17 + attempt, attempt + 3) * (W - 12));
+            const y = 6 + Math.floor(hash(attempt - 9, typeIndex * 23 + attempt) * (D - 12));
+            if (Math.hypot(x - player.x, y - player.y) < 10) continue;
+            const h = highestSolid(x, y);
+            if (h < 8 || h > H - 5 || getBlock(x, y, h + 1)) continue;
+            enemies.push({
+              typeIndex,
+              x: x + 0.5,
+              y: y + 0.5,
+              z: h + 1.05,
+              vx: 0,
+              vy: 0,
+              wander: hash(x, y) * Math.PI * 2,
+              clock: hash(y, x) * 10,
+              hp: type.mode === "heavy" ? 4 : 2
+            });
+            placed++;
+          }
+        });
+      }
+
+      function updateEnemies(dt) {
+        enemies.forEach((enemy) => {
+          const type = enemyTypes[enemy.typeIndex];
+          enemy.clock += dt;
+          const dx = player.x - enemy.x;
+          const dy = player.y - enemy.y;
+          const dist = Math.hypot(dx, dy) || 1;
+          const seesPlayer = dist < (type.mode === "heavy" ? 9 : 14);
+          let dirX = Math.cos(enemy.wander);
+          let dirY = Math.sin(enemy.wander);
+          if (seesPlayer) {
+            dirX = dx / dist;
+            dirY = dy / dist;
+          } else if (enemy.clock % 3 < dt) {
+            enemy.wander += (hash(enemy.x + enemy.clock, enemy.y) - 0.5) * 1.8;
+          }
+
+          const burst = type.mode === "charge" && seesPlayer && Math.sin(enemy.clock * 3.2) > 0.72 ? 1.85 : 1;
+          const speed = type.speed * burst;
+          const nx = enemy.x + dirX * speed * dt;
+          const ny = enemy.y + dirY * speed * dt;
+          const ground = highestSolid(nx, ny);
+          const targetZ = type.mode === "fly" ? ground + 2.4 + Math.sin(enemy.clock * 2.4) * 0.55 : ground + 1.05;
+          if (!getBlock(nx, ny, Math.floor(targetZ))) {
+            enemy.x = nx;
+            enemy.y = ny;
+          } else {
+            enemy.wander += 1.7;
+          }
+          enemy.z += (targetZ - enemy.z) * Math.min(1, dt * 5);
+
+          if (dist < type.size + 0.42 && Math.abs(player.z - enemy.z) < 2.1) {
+            player.vx += (dx / dist) * 2.1 * dt;
+            player.vy += (dy / dist) * 2.1 * dt;
+            player.vz = Math.max(player.vz, 1.2);
+          }
+        });
+      }
+
       function buildHotbar() {
         hotbarEl.innerHTML = "";
         hotbar.forEach((id, index) => {
           const slot = document.createElement("div");
           slot.className = `slot${index === selected ? " active" : ""}`;
           slot.title = blocks[id].name;
-          const swatch = document.createElement("div");
-          swatch.className = "swatch";
-          swatch.style.background = rgb(blocks[id].top || blocks[id].color);
+          const swatch = makeItemIcon(id, "swatch");
           const key = document.createElement("span");
           key.className = "key";
           key.textContent = String(index + 1);
@@ -770,9 +1096,7 @@
           item.className = `item-cell${hotbar[selected] === id ? " active" : ""}`;
           item.type = "button";
           item.title = blocks[id].name;
-          const swatch = document.createElement("span");
-          swatch.className = "item-swatch";
-          swatch.style.background = rgb(blocks[id].top || blocks[id].color);
+          const swatch = makeItemIcon(id, "item-icon");
           const number = document.createElement("span");
           number.className = "item-number";
           number.textContent = blocks[id].name;
@@ -791,6 +1115,15 @@
         const shouldOpen = typeof force === "boolean" ? force : !inventoryPanel.classList.contains("open");
         inventoryPanel.classList.toggle("open", shouldOpen);
         if (shouldOpen) buildInventory();
+      }
+
+      function makeItemIcon(id, baseClass) {
+        const icon = document.createElement("span");
+        const item = blocks[id];
+        icon.className = `${baseClass} item-icon shape-${item.shape || "cube"}`;
+        icon.style.setProperty("--c", rgb(item.color));
+        icon.style.setProperty("--t", rgb(item.top || item.color));
+        return icon;
       }
 
       function rgb(c) {
@@ -863,6 +1196,8 @@
           player.z = 23;
           player.vx = player.vy = player.vz = 0;
         }
+
+        updateEnemies(dt);
       }
 
       function castRay(dir, maxDist) {
@@ -943,16 +1278,113 @@
         ctx.fill();
       }
 
+      function drawEnemySprite(enemy, sx, sy, size, dist) {
+        const type = enemyTypes[enemy.typeIndex];
+        const body = rgb(type.body);
+        const eye = rgb(type.eye);
+        const shadow = Math.max(0.42, 1 - dist / 24);
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.scale(size / 38, size / 38);
+        ctx.globalAlpha = Math.min(1, 0.55 + shadow);
+
+        if (type.mode === "fly") {
+          ctx.fillStyle = "rgba(120, 235, 255, 0.22)";
+          ctx.beginPath();
+          ctx.arc(0, -2, 21, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = body;
+          ctx.beginPath();
+          ctx.arc(0, -2, 12, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = eye;
+          ctx.fillRect(-5, -5, 3, 3);
+          ctx.fillRect(3, -5, 3, 3);
+        } else if (type.mode === "heavy") {
+          ctx.fillStyle = shade(type.body, 0.66);
+          ctx.fillRect(-16, -18, 32, 34);
+          ctx.fillStyle = body;
+          ctx.fillRect(-13, -22, 26, 18);
+          ctx.fillStyle = eye;
+          ctx.fillRect(-8, -14, 5, 4);
+          ctx.fillRect(3, -14, 5, 4);
+        } else if (type.mode === "charge") {
+          ctx.fillStyle = shade(type.body, 0.72);
+          ctx.fillRect(-18, -10, 36, 20);
+          ctx.fillStyle = body;
+          ctx.fillRect(-11, -20, 22, 17);
+          ctx.fillStyle = "#e9d29a";
+          ctx.fillRect(-20, -16, 7, 5);
+          ctx.fillRect(13, -16, 7, 5);
+          ctx.fillStyle = eye;
+          ctx.fillRect(-5, -13, 3, 3);
+          ctx.fillRect(3, -13, 3, 3);
+        } else if (type.mode === "dart") {
+          ctx.fillStyle = body;
+          ctx.fillRect(-10, -20, 20, 30);
+          ctx.fillStyle = shade(type.body, 0.66);
+          ctx.fillRect(-16, 1, 9, 12);
+          ctx.fillRect(7, 1, 9, 12);
+          ctx.fillStyle = eye;
+          ctx.fillRect(-6, -13, 4, 4);
+          ctx.fillRect(2, -13, 4, 4);
+        } else {
+          ctx.fillStyle = body;
+          ctx.fillRect(-13, -22, 26, 36);
+          ctx.fillStyle = shade(type.body, 0.7);
+          ctx.fillRect(-18, -3, 7, 16);
+          ctx.fillRect(11, -3, 7, 16);
+          ctx.fillStyle = eye;
+          ctx.fillRect(-7, -14, 4, 5);
+          ctx.fillRect(3, -14, 4, 5);
+        }
+
+        ctx.restore();
+      }
+
+      function renderEnemies(depthColumns, step) {
+        const aspect = RW / RH;
+        const tan = Math.tan(FOV / 2);
+        const cy = Math.cos(player.yaw);
+        const sy = Math.sin(player.yaw);
+        const sorted = [...enemies].sort((a, b) => {
+          const da = Math.hypot(a.x - player.x, a.y - player.y);
+          const db = Math.hypot(b.x - player.x, b.y - player.y);
+          return db - da;
+        });
+
+        sorted.forEach((enemy) => {
+          const type = enemyTypes[enemy.typeIndex];
+          const dx = enemy.x - player.x;
+          const dy = enemy.y - player.y;
+          const dz = enemy.z - player.z;
+          const forward = dx * cy + dy * sy;
+          if (forward <= 0.25 || forward > 34) return;
+          const right = -dx * sy + dy * cy;
+          const sx = RW / 2 + (right / (forward * tan * aspect)) * RW / 2;
+          const syScreen = RH / 2 - ((dz / forward) - Math.tan(player.pitch)) / tan * RH / 2;
+          const size = Math.max(8, (type.size * 118) / forward);
+          if (sx < -size || sx > RW + size || syScreen < -size || syScreen > RH + size) return;
+          const column = Math.max(0, Math.min(depthColumns.length - 1, Math.floor(sx / step)));
+          if (depthColumns[column] < forward - 0.8) return;
+          drawEnemySprite(enemy, sx, syScreen, size, forward);
+        });
+      }
+
       function render() {
         renderSky();
         const step = RW < 360 ? 2 : 3;
         const maxDist = 36;
+        const depthColumns = new Float32Array(Math.ceil(RW / step));
+        depthColumns.fill(maxDist);
         target = castRay(cameraDir(RW / 2, RH / 2), 6);
 
         for (let y = 0; y < RH; y += step) {
           for (let x = 0; x < RW; x += step) {
             const hit = castRay(cameraDir(x + step / 2, y + step / 2), maxDist);
             if (!hit) continue;
+            const column = Math.floor(x / step);
+            if (hit.dist < depthColumns[column]) depthColumns[column] = hit.dist;
             const block = blocks[hit.id];
             const topColor = block.top || block.color;
             const base = hit.face === 2 ? topColor : block.color;
@@ -964,6 +1396,8 @@
             ctx.fillRect(x, y, step + 1, step + 1);
           }
         }
+
+        renderEnemies(depthColumns, step);
 
         if (target) {
           ctx.strokeStyle = "rgba(255,255,255,0.55)";
@@ -1168,6 +1602,7 @@
       startBtn.addEventListener("click", startGame);
 
       generateWorld();
+      spawnEnemies();
       buildHotbar();
       buildInventory();
       requestAnimationFrame(tick);
