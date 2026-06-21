@@ -117,6 +117,22 @@
       transition: width 140ms ease;
     }
 
+    .xpbar {
+      width: 112px;
+      height: 8px;
+      border: 1px solid rgba(255,255,255,0.24);
+      border-radius: 999px;
+      background: rgba(0,0,0,0.26);
+      overflow: hidden;
+    }
+
+    .xpfill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, #63d66f, #d7ef72);
+      transition: width 160ms ease;
+    }
+
     .hotbar {
       position: absolute;
       left: 50%;
@@ -605,8 +621,10 @@
       <span class="brand">Blocklands</span>
       <span class="metric" id="pos">0 0 0</span>
       <span class="metric" id="fps">60 fps</span>
+      <span class="metric" id="level">Lv 1</span>
       <span class="metric" id="gear">hands / cloth</span>
       <div class="healthbar" title="Health"><div class="healthfill" id="healthFill"></div></div>
+      <div class="xpbar" title="Experience"><div class="xpfill" id="xpFill"></div></div>
     </div>
     <div class="crosshair"></div>
     <div class="hotbar" id="hotbar"></div>
@@ -647,8 +665,10 @@
       const ctx = canvas.getContext("2d", { alpha: false });
       const posEl = document.getElementById("pos");
       const fpsEl = document.getElementById("fps");
+      const levelEl = document.getElementById("level");
       const gearEl = document.getElementById("gear");
       const healthFillEl = document.getElementById("healthFill");
+      const xpFillEl = document.getElementById("xpFill");
       const promptEl = document.getElementById("prompt");
       const startBtn = document.getElementById("start");
       const hotbarEl = document.getElementById("hotbar");
@@ -881,16 +901,20 @@
         grounded: false,
         health: 20,
         maxHealth: 20,
-        invulnerable: 0
+        invulnerable: 0,
+        level: 1,
+        xp: 0,
+        nextXp: 12
       };
       const enemyTypes = [
-        { name: "Moss Creeper", body: [62, 142, 78], eye: [255, 235, 120], speed: 1.1, size: 0.95, mode: "stalk", damage: 3 },
-        { name: "Cave Imp", body: [130, 58, 72], eye: [255, 190, 72], speed: 1.7, size: 0.72, mode: "dart", damage: 2 },
-        { name: "Stone Guard", body: [98, 104, 113], eye: [105, 220, 240], speed: 0.75, size: 1.22, mode: "heavy", damage: 4 },
-        { name: "Glow Wisp", body: [88, 195, 220], eye: [255, 255, 210], speed: 1.45, size: 0.78, mode: "fly", damage: 2 },
-        { name: "Bramble Boar", body: [116, 82, 48], eye: [255, 246, 160], speed: 1.25, size: 1.05, mode: "charge", damage: 3 }
+        { name: "Moss Creeper", body: [62, 142, 78], eye: [255, 235, 120], speed: 1.1, size: 0.95, mode: "stalk", damage: 3, xp: 5 },
+        { name: "Cave Imp", body: [130, 58, 72], eye: [255, 190, 72], speed: 1.7, size: 0.72, mode: "dart", damage: 2, xp: 4 },
+        { name: "Stone Guard", body: [98, 104, 113], eye: [105, 220, 240], speed: 0.75, size: 1.22, mode: "heavy", damage: 4, xp: 8 },
+        { name: "Glow Wisp", body: [88, 195, 220], eye: [255, 255, 210], speed: 1.45, size: 0.78, mode: "fly", damage: 2, xp: 6 },
+        { name: "Bramble Boar", body: [116, 82, 48], eye: [255, 246, 160], speed: 1.25, size: 1.05, mode: "charge", damage: 3, xp: 7 }
       ];
       const enemies = [];
+      const xpOrbs = [];
 
       let last = performance.now();
       let frames = 0;
@@ -1113,6 +1137,7 @@
               wander: hash(x, y) * Math.PI * 2,
               clock: hash(y, x) * 10,
               attackCooldown: 0,
+              hitFlash: 0,
               hp: type.mode === "heavy" ? 4 : 2
             });
             placed++;
@@ -1120,11 +1145,67 @@
         });
       }
 
+      function spawnOneEnemy(typeIndex, avoidX = player.x, avoidY = player.y) {
+        const type = enemyTypes[typeIndex];
+        for (let attempt = 0; attempt < 100; attempt++) {
+          const seed = performance.now() * 0.01 + typeIndex * 31 + attempt;
+          const x = 6 + Math.floor(hash(seed, attempt + 19) * (W - 12));
+          const y = 6 + Math.floor(hash(attempt - 27, seed + 3) * (D - 12));
+          if (Math.hypot(x - avoidX, y - avoidY) < 13) continue;
+          const h = highestSolid(x, y);
+          if (h < 8 || h > H - 5 || getBlock(x, y, h + 1)) continue;
+          enemies.push({
+            typeIndex,
+            x: x + 0.5,
+            y: y + 0.5,
+            z: h + 1.05,
+            vx: 0,
+            vy: 0,
+            wander: hash(x, y) * Math.PI * 2,
+            clock: hash(y, x) * 10,
+            attackCooldown: 0,
+            hitFlash: 0,
+            hp: type.mode === "heavy" ? 4 : 2,
+            respawnTimer: 0
+          });
+          return true;
+        }
+        return false;
+      }
+
+      function spawnXpBurst(x, y, z, amount) {
+        const count = Math.max(2, Math.min(8, Math.ceil(amount / 2)));
+        for (let i = 0; i < count; i++) {
+          xpOrbs.push({
+            x: x + (hash(amount, i) - 0.5) * 0.8,
+            y: y + (hash(i, amount) - 0.5) * 0.8,
+            z: z + 0.4 + hash(i + 3, amount + 5) * 0.6,
+            value: Math.max(1, Math.round(amount / count)),
+            life: 8,
+            spin: hash(i + 9, amount) * Math.PI * 2
+          });
+        }
+      }
+
+      function addExperience(amount) {
+        player.xp += amount;
+        while (player.xp >= player.nextXp) {
+          player.xp -= player.nextXp;
+          player.level++;
+          player.nextXp = Math.floor(player.nextXp * 1.35 + 6);
+          player.maxHealth += 2;
+          player.health = player.maxHealth;
+          player.invulnerable = Math.max(player.invulnerable, 0.9);
+        }
+        updateHud();
+      }
+
       function updateEnemies(dt) {
         enemies.forEach((enemy) => {
           const type = enemyTypes[enemy.typeIndex];
           enemy.clock += dt;
           enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
+          enemy.hitFlash = Math.max(0, enemy.hitFlash - dt);
           const dx = player.x - enemy.x;
           const dy = player.y - enemy.y;
           const dist = Math.hypot(dx, dy) || 1;
@@ -1157,6 +1238,32 @@
             enemy.attackCooldown = 1.15;
           }
         });
+      }
+
+      function updateXpOrbs(dt) {
+        for (let i = xpOrbs.length - 1; i >= 0; i--) {
+          const orb = xpOrbs[i];
+          orb.life -= dt;
+          orb.spin += dt * 5;
+          const dx = player.x - orb.x;
+          const dy = player.y - orb.y;
+          const dz = player.z - orb.z;
+          const dist = Math.hypot(dx, dy, dz) || 1;
+          if (dist < 5) {
+            const pull = Math.min(8, 10 / dist) * dt;
+            orb.x += (dx / dist) * pull;
+            orb.y += (dy / dist) * pull;
+            orb.z += (dz / dist) * pull;
+          } else {
+            orb.z += Math.sin(orb.spin) * 0.006;
+          }
+          if (dist < 0.8) {
+            addExperience(orb.value);
+            xpOrbs.splice(i, 1);
+          } else if (orb.life <= 0) {
+            xpOrbs.splice(i, 1);
+          }
+        }
       }
 
       function buildHotbar() {
@@ -1230,8 +1337,10 @@
       function updateHud() {
         const weapon = blocks[gear.weapon];
         const armor = blocks[gear.armor];
+        levelEl.textContent = `Lv ${player.level}`;
         gearEl.textContent = `${weapon.name} / ${armor.name}`;
         healthFillEl.style.width = `${Math.max(0, player.health / player.maxHealth) * 100}%`;
+        xpFillEl.style.width = `${Math.max(0, Math.min(1, player.xp / player.nextXp)) * 100}%`;
       }
 
       function respawnPlayer() {
@@ -1284,6 +1393,7 @@
         });
         if (!best) return false;
         best.hp -= damage;
+        best.hitFlash = 0.2;
         const dx = best.x - player.x;
         const dy = best.y - player.y;
         const dist = Math.hypot(dx, dy) || 1;
@@ -1291,8 +1401,12 @@
         best.y += (dy / dist) * 0.55;
         best.clock += 0.35;
         if (best.hp <= 0) {
+          const typeIndex = best.typeIndex;
+          const xp = enemyTypes[typeIndex].xp || 3;
+          spawnXpBurst(best.x, best.y, best.z, xp);
           const index = enemies.indexOf(best);
           if (index >= 0) enemies.splice(index, 1);
+          setTimeout(() => spawnOneEnemy(typeIndex), 2500 + typeIndex * 450);
         }
         return true;
       }
@@ -1372,6 +1486,7 @@
         }
 
         updateEnemies(dt);
+        updateXpOrbs(dt);
       }
 
       function castRay(dir, maxDist) {
@@ -1513,6 +1628,12 @@
           ctx.fillRect(3, -14, 4, 5);
         }
 
+        if (enemy.hitFlash > 0) {
+          ctx.globalAlpha = Math.min(0.8, enemy.hitFlash * 4);
+          ctx.fillStyle = "#fff5c9";
+          ctx.fillRect(-18, -22, 36, 38);
+        }
+
         ctx.restore();
       }
 
@@ -1545,6 +1666,44 @@
         });
       }
 
+      function drawXpOrb(sx, sy, size, life) {
+        ctx.save();
+        ctx.translate(sx, sy);
+        ctx.globalAlpha = Math.max(0.25, Math.min(1, life / 1.2));
+        const glow = ctx.createRadialGradient(0, 0, 1, 0, 0, size * 0.72);
+        glow.addColorStop(0, "rgba(236,255,119,0.95)");
+        glow.addColorStop(0.45, "rgba(91,224,86,0.78)");
+        glow.addColorStop(1, "rgba(91,224,86,0)");
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, size * 0.72, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = "#e8ff7a";
+        ctx.fillRect(-size * 0.16, -size * 0.16, size * 0.32, size * 0.32);
+        ctx.restore();
+      }
+
+      function renderXpOrbs(depthColumns, step) {
+        const aspect = RW / RH;
+        const tan = Math.tan(FOV / 2);
+        const cy = Math.cos(player.yaw);
+        const sy = Math.sin(player.yaw);
+        xpOrbs.forEach((orb) => {
+          const dx = orb.x - player.x;
+          const dy = orb.y - player.y;
+          const dz = orb.z - player.z;
+          const forward = dx * cy + dy * sy;
+          if (forward <= 0.25 || forward > 32) return;
+          const right = -dx * sy + dy * cy;
+          const sx = RW / 2 + (right / (forward * tan * aspect)) * RW / 2;
+          const syScreen = RH / 2 - ((dz / forward) - Math.tan(player.pitch)) / tan * RH / 2;
+          const size = Math.max(5, 42 / forward);
+          const column = Math.max(0, Math.min(depthColumns.length - 1, Math.floor(sx / step)));
+          if (depthColumns[column] < forward - 0.5) return;
+          drawXpOrb(sx, syScreen + Math.sin(orb.spin) * 2, size, orb.life);
+        });
+      }
+
       function render() {
         renderSky();
         const step = RW < 360 ? 2 : 3;
@@ -1572,6 +1731,7 @@
         }
 
         renderEnemies(depthColumns, step);
+        renderXpOrbs(depthColumns, step);
 
         if (target) {
           ctx.strokeStyle = "rgba(255,255,255,0.55)";
