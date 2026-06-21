@@ -1,0 +1,640 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Blocklands</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #f5f1e8;
+      --panel: rgba(13, 18, 24, 0.62);
+      --line: rgba(255, 255, 255, 0.18);
+      --accent: #e7c86b;
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #111820;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+    }
+
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+      image-rendering: pixelated;
+      background: #6eb3df;
+      cursor: crosshair;
+    }
+
+    .hud {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .crosshair {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: 18px;
+      height: 18px;
+      transform: translate(-50%, -50%);
+    }
+
+    .crosshair::before,
+    .crosshair::after {
+      content: "";
+      position: absolute;
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 0 4px rgba(0, 0, 0, 0.45);
+      border-radius: 2px;
+    }
+
+    .crosshair::before {
+      left: 8px;
+      top: 1px;
+      width: 2px;
+      height: 16px;
+    }
+
+    .crosshair::after {
+      left: 1px;
+      top: 8px;
+      width: 16px;
+      height: 2px;
+    }
+
+    .topbar {
+      position: absolute;
+      left: 18px;
+      top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.25);
+      backdrop-filter: blur(12px);
+      font-size: 13px;
+      line-height: 1;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .metric {
+      min-width: 76px;
+      color: rgba(245, 241, 232, 0.78);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .hotbar {
+      position: absolute;
+      left: 50%;
+      bottom: 24px;
+      display: grid;
+      grid-template-columns: repeat(6, 54px);
+      gap: 6px;
+      transform: translateX(-50%);
+      padding: 8px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: 0 14px 38px rgba(0, 0, 0, 0.32);
+      backdrop-filter: blur(12px);
+    }
+
+    .slot {
+      position: relative;
+      width: 54px;
+      height: 54px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .slot.active {
+      border-color: var(--accent);
+      box-shadow: inset 0 0 0 2px rgba(231, 200, 107, 0.8), 0 0 18px rgba(231, 200, 107, 0.22);
+    }
+
+    .swatch {
+      position: absolute;
+      left: 11px;
+      top: 9px;
+      width: 32px;
+      height: 32px;
+      border-radius: 4px;
+      box-shadow: inset 0 9px 0 rgba(255, 255, 255, 0.16), inset 0 -8px 0 rgba(0, 0, 0, 0.16);
+    }
+
+    .key {
+      position: absolute;
+      right: 5px;
+      bottom: 2px;
+      color: rgba(255, 255, 255, 0.72);
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .prompt {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      width: min(420px, calc(100vw - 34px));
+      transform: translate(-50%, -50%);
+      padding: 22px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(11, 16, 22, 0.76);
+      box-shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+      backdrop-filter: blur(16px);
+      text-align: center;
+      pointer-events: auto;
+    }
+
+    .prompt h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      letter-spacing: 0;
+    }
+
+    .prompt p {
+      margin: 0 0 16px;
+      color: rgba(245, 241, 232, 0.78);
+      line-height: 1.55;
+      font-size: 14px;
+    }
+
+    .prompt button {
+      width: 100%;
+      min-height: 44px;
+      border: 0;
+      border-radius: 7px;
+      background: #e7c86b;
+      color: #1b1608;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .prompt button:hover { background: #f2d77d; }
+    .hidden { display: none; }
+
+    @media (max-width: 560px) {
+      .topbar {
+        left: 10px;
+        top: 10px;
+        max-width: calc(100vw - 20px);
+        flex-wrap: wrap;
+      }
+
+      .hotbar {
+        bottom: 14px;
+        grid-template-columns: repeat(6, 42px);
+        gap: 4px;
+      }
+
+      .slot {
+        width: 42px;
+        height: 42px;
+      }
+
+      .swatch {
+        left: 8px;
+        top: 7px;
+        width: 25px;
+        height: 25px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <canvas id="game" width="480" height="270"></canvas>
+  <div class="hud">
+    <div class="topbar">
+      <span class="brand">Blocklands</span>
+      <span class="metric" id="pos">0 0 0</span>
+      <span class="metric" id="fps">60 fps</span>
+    </div>
+    <div class="crosshair"></div>
+    <div class="hotbar" id="hotbar"></div>
+    <div class="prompt" id="prompt">
+      <h1>Blocklands</h1>
+      <p>點一下進入世界。WASD 移動，空白鍵跳躍，滑鼠左鍵挖掘，右鍵放置，1-6 切換方塊。</p>
+      <button id="start">開始</button>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      "use strict";
+
+      const canvas = document.getElementById("game");
+      const ctx = canvas.getContext("2d", { alpha: false });
+      const posEl = document.getElementById("pos");
+      const fpsEl = document.getElementById("fps");
+      const promptEl = document.getElementById("prompt");
+      const startBtn = document.getElementById("start");
+      const hotbarEl = document.getElementById("hotbar");
+
+      const W = 64;
+      const D = 64;
+      const H = 32;
+      const FOV = Math.PI / 2.35;
+      const SCALE = Math.max(1, Math.floor(Math.min(innerWidth / 420, innerHeight / 240)));
+      const RW = Math.max(240, Math.min(640, Math.floor(innerWidth / SCALE)));
+      const RH = Math.max(160, Math.min(360, Math.floor(innerHeight / SCALE)));
+      canvas.width = RW;
+      canvas.height = RH;
+
+      const blocks = [
+        null,
+        { name: "grass", color: [74, 156, 76], top: [112, 184, 79] },
+        { name: "dirt", color: [122, 86, 52] },
+        { name: "stone", color: [120, 124, 128] },
+        { name: "wood", color: [132, 91, 47] },
+        { name: "leaf", color: [48, 127, 72] },
+        { name: "sand", color: [213, 192, 124] },
+        { name: "brick", color: [158, 76, 61] }
+      ];
+
+      const hotbar = [1, 2, 3, 4, 5, 6];
+      let selected = 0;
+      const world = new Uint8Array(W * D * H);
+      const keys = new Set();
+      const player = {
+        x: W / 2 + 0.5,
+        y: D / 2 + 0.5,
+        z: 22,
+        vx: 0,
+        vy: 0,
+        vz: 0,
+        yaw: -Math.PI / 2,
+        pitch: -0.16,
+        grounded: false
+      };
+
+      let last = performance.now();
+      let frames = 0;
+      let fpsClock = last;
+      let target = null;
+
+      function idx(x, y, z) {
+        return x + y * W + z * W * D;
+      }
+
+      function inBounds(x, y, z) {
+        return x >= 0 && x < W && y >= 0 && y < D && z >= 0 && z < H;
+      }
+
+      function getBlock(x, y, z) {
+        x = Math.floor(x);
+        y = Math.floor(y);
+        z = Math.floor(z);
+        if (!inBounds(x, y, z)) return z < 0 ? 3 : 0;
+        return world[idx(x, y, z)];
+      }
+
+      function setBlock(x, y, z, id) {
+        x = Math.floor(x);
+        y = Math.floor(y);
+        z = Math.floor(z);
+        if (inBounds(x, y, z)) world[idx(x, y, z)] = id;
+      }
+
+      function hash(x, y) {
+        let n = x * 374761393 + y * 668265263;
+        n = (n ^ (n >> 13)) * 1274126177;
+        return ((n ^ (n >> 16)) >>> 0) / 4294967295;
+      }
+
+      function smoothNoise(x, y, scale) {
+        const ix = Math.floor(x / scale);
+        const iy = Math.floor(y / scale);
+        const fx = x / scale - ix;
+        const fy = y / scale - iy;
+        const a = hash(ix, iy);
+        const b = hash(ix + 1, iy);
+        const c = hash(ix, iy + 1);
+        const d = hash(ix + 1, iy + 1);
+        const u = fx * fx * (3 - 2 * fx);
+        const v = fy * fy * (3 - 2 * fy);
+        return (a + (b - a) * u) + ((c + (d - c) * u) - (a + (b - a) * u)) * v;
+      }
+
+      function generateWorld() {
+        for (let x = 0; x < W; x++) {
+          for (let y = 0; y < D; y++) {
+            const hill = smoothNoise(x, y, 13) * 6 + smoothNoise(x + 90, y - 40, 7) * 3;
+            const h = Math.floor(10 + hill);
+            for (let z = 0; z <= h; z++) {
+              const id = z === h ? (h < 12 ? 6 : 1) : (z > h - 4 ? 2 : 3);
+              setBlock(x, y, z, id);
+            }
+            if (hash(x + 11, y - 3) > 0.985 && h > 12) {
+              for (let z = h + 1; z < h + 5; z++) setBlock(x, y, z, 4);
+              for (let ox = -2; ox <= 2; ox++) {
+                for (let oy = -2; oy <= 2; oy++) {
+                  for (let oz = 3; oz <= 5; oz++) {
+                    if (Math.abs(ox) + Math.abs(oy) + Math.abs(oz - 4) < 5 && hash(x + ox, y + oy) > 0.16) {
+                      setBlock(x + ox, y + oy, h + oz, 5);
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+
+        for (let x = 28; x < 36; x++) {
+          for (let y = 30; y < 38; y++) {
+            for (let z = 14; z < 18; z++) setBlock(x, y, z, 0);
+            if (x === 28 || x === 35 || y === 30 || y === 37) setBlock(x, y, 14, 7);
+          }
+        }
+      }
+
+      function buildHotbar() {
+        hotbarEl.innerHTML = "";
+        hotbar.forEach((id, index) => {
+          const slot = document.createElement("div");
+          slot.className = `slot${index === selected ? " active" : ""}`;
+          slot.title = blocks[id].name;
+          const swatch = document.createElement("div");
+          swatch.className = "swatch";
+          swatch.style.background = rgb(blocks[id].top || blocks[id].color);
+          const key = document.createElement("span");
+          key.className = "key";
+          key.textContent = String(index + 1);
+          slot.append(swatch, key);
+          hotbarEl.append(slot);
+        });
+      }
+
+      function rgb(c) {
+        return `rgb(${c[0]}, ${c[1]}, ${c[2]})`;
+      }
+
+      function shade(c, amount) {
+        return `rgb(${Math.max(0, Math.min(255, c[0] * amount)) | 0}, ${Math.max(0, Math.min(255, c[1] * amount)) | 0}, ${Math.max(0, Math.min(255, c[2] * amount)) | 0})`;
+      }
+
+      function collides(nx, ny, nz) {
+        const r = 0.28;
+        const minX = Math.floor(nx - r);
+        const maxX = Math.floor(nx + r);
+        const minY = Math.floor(ny - r);
+        const maxY = Math.floor(ny + r);
+        const minZ = Math.floor(nz - 1.62);
+        const maxZ = Math.floor(nz + 0.12);
+        for (let x = minX; x <= maxX; x++) {
+          for (let y = minY; y <= maxY; y++) {
+            for (let z = minZ; z <= maxZ; z++) {
+              if (getBlock(x, y, z)) return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function moveAxis(axis, amount) {
+        if (amount === 0) return;
+        const next = { x: player.x, y: player.y, z: player.z };
+        next[axis] += amount;
+        if (!collides(next.x, next.y, next.z)) {
+          player[axis] = next[axis];
+        } else {
+          if (axis === "z") {
+            player.grounded = amount < 0;
+            player.vz = 0;
+          }
+          if (axis === "x") player.vx = 0;
+          if (axis === "y") player.vy = 0;
+        }
+      }
+
+      function update(dt) {
+        const forward = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
+        const strafe = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
+        const speed = keys.has("ShiftLeft") ? 8.2 : 5.2;
+        const sin = Math.sin(player.yaw);
+        const cos = Math.cos(player.yaw);
+        const len = Math.hypot(forward, strafe) || 1;
+        const ax = ((cos * forward - sin * strafe) / len) * speed;
+        const ay = ((sin * forward + cos * strafe) / len) * speed;
+        const drag = Math.pow(0.0009, dt);
+        player.vx = player.vx * drag + ax * dt * 8;
+        player.vy = player.vy * drag + ay * dt * 8;
+        player.vz -= 18 * dt;
+        if (keys.has("Space") && player.grounded) {
+          player.vz = 7.2;
+          player.grounded = false;
+        }
+
+        moveAxis("x", player.vx * dt);
+        moveAxis("y", player.vy * dt);
+        moveAxis("z", player.vz * dt);
+
+        if (player.z < 3) {
+          player.x = W / 2 + 0.5;
+          player.y = D / 2 + 0.5;
+          player.z = 23;
+          player.vx = player.vy = player.vz = 0;
+        }
+      }
+
+      function castRay(dir, maxDist) {
+        let x = Math.floor(player.x);
+        let y = Math.floor(player.y);
+        let z = Math.floor(player.z);
+        const stepX = dir.x >= 0 ? 1 : -1;
+        const stepY = dir.y >= 0 ? 1 : -1;
+        const stepZ = dir.z >= 0 ? 1 : -1;
+        const tDeltaX = Math.abs(1 / (dir.x || 0.00001));
+        const tDeltaY = Math.abs(1 / (dir.y || 0.00001));
+        const tDeltaZ = Math.abs(1 / (dir.z || 0.00001));
+        let tMaxX = ((dir.x >= 0 ? x + 1 - player.x : player.x - x) * tDeltaX);
+        let tMaxY = ((dir.y >= 0 ? y + 1 - player.y : player.y - y) * tDeltaY);
+        let tMaxZ = ((dir.z >= 0 ? z + 1 - player.z : player.z - z) * tDeltaZ);
+        let face = 2;
+        let px = x;
+        let py = y;
+        let pz = z;
+        let dist = 0;
+
+        for (let i = 0; i < 96 && dist <= maxDist; i++) {
+          const id = getBlock(x, y, z);
+          if (id) return { id, x, y, z, px, py, pz, face, dist };
+          px = x;
+          py = y;
+          pz = z;
+          if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+            x += stepX;
+            dist = tMaxX;
+            tMaxX += tDeltaX;
+            face = 0;
+          } else if (tMaxY < tMaxZ) {
+            y += stepY;
+            dist = tMaxY;
+            tMaxY += tDeltaY;
+            face = 1;
+          } else {
+            z += stepZ;
+            dist = tMaxZ;
+            tMaxZ += tDeltaZ;
+            face = 2;
+          }
+        }
+        return null;
+      }
+
+      function cameraDir(px, py) {
+        const aspect = RW / RH;
+        const nx = (px / RW - 0.5) * 2;
+        const ny = (0.5 - py / RH) * 2;
+        const tan = Math.tan(FOV / 2);
+        const cy = Math.cos(player.yaw);
+        const sy = Math.sin(player.yaw);
+        const cp = Math.cos(player.pitch);
+        const sp = Math.sin(player.pitch);
+        const forward = { x: cy * cp, y: sy * cp, z: sp };
+        const right = { x: -sy, y: cy, z: 0 };
+        const up = { x: -cy * sp, y: -sy * sp, z: cp };
+        let x = forward.x + right.x * nx * tan * aspect + up.x * ny * tan;
+        let y = forward.y + right.y * nx * tan * aspect + up.y * ny * tan;
+        let z = forward.z + right.z * nx * tan * aspect + up.z * ny * tan;
+        const mag = Math.hypot(x, y, z);
+        return { x: x / mag, y: y / mag, z: z / mag };
+      }
+
+      function renderSky() {
+        const g = ctx.createLinearGradient(0, 0, 0, RH);
+        g.addColorStop(0, "#7cc7ef");
+        g.addColorStop(0.55, "#b9e0f2");
+        g.addColorStop(0.56, "#769564");
+        g.addColorStop(1, "#43543c");
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, RW, RH);
+        ctx.fillStyle = "rgba(255, 239, 172, 0.9)";
+        ctx.beginPath();
+        ctx.arc(RW * 0.82, RH * 0.18, Math.max(10, RH * 0.055), 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      function render() {
+        renderSky();
+        const step = RW < 360 ? 2 : 3;
+        const maxDist = 36;
+        target = castRay(cameraDir(RW / 2, RH / 2), 6);
+
+        for (let y = 0; y < RH; y += step) {
+          for (let x = 0; x < RW; x += step) {
+            const hit = castRay(cameraDir(x + step / 2, y + step / 2), maxDist);
+            if (!hit) continue;
+            const block = blocks[hit.id];
+            const topColor = block.top || block.color;
+            const base = hit.face === 2 ? topColor : block.color;
+            const faceShade = hit.face === 0 ? 0.72 : hit.face === 1 ? 0.62 : 0.94;
+            const fog = Math.max(0.34, 1 - hit.dist / maxDist);
+            const checker = ((hit.x + hit.y + hit.z) & 1) ? 0.95 : 1.04;
+            ctx.fillStyle = shade(base, faceShade * fog * checker);
+            ctx.fillRect(x, y, step + 1, step + 1);
+          }
+        }
+
+        if (target) {
+          ctx.strokeStyle = "rgba(255,255,255,0.55)";
+          ctx.lineWidth = 1;
+          ctx.strokeRect(RW / 2 - 12, RH / 2 - 12, 24, 24);
+        }
+      }
+
+      function tick(now) {
+        const dt = Math.min(0.033, (now - last) / 1000);
+        last = now;
+        update(dt);
+        render();
+        frames++;
+        if (now - fpsClock > 500) {
+          fpsEl.textContent = `${Math.round(frames * 1000 / (now - fpsClock))} fps`;
+          frames = 0;
+          fpsClock = now;
+        }
+        posEl.textContent = `${player.x.toFixed(1)} ${player.y.toFixed(1)} ${player.z.toFixed(1)}`;
+        requestAnimationFrame(tick);
+      }
+
+      function mine() {
+        if (!target || target.dist > 6) return;
+        setBlock(target.x, target.y, target.z, 0);
+      }
+
+      function place() {
+        if (!target || target.dist > 6) return;
+        const id = hotbar[selected];
+        if (!getBlock(target.px, target.py, target.pz)) {
+          setBlock(target.px, target.py, target.pz, id);
+          if (collides(player.x, player.y, player.z)) setBlock(target.px, target.py, target.pz, 0);
+        }
+      }
+
+      addEventListener("keydown", (event) => {
+        keys.add(event.code);
+        if (/^Digit[1-6]$/.test(event.code)) {
+          selected = Number(event.code.slice(5)) - 1;
+          buildHotbar();
+        }
+      });
+
+      addEventListener("keyup", (event) => keys.delete(event.code));
+
+      addEventListener("resize", () => location.reload());
+
+      canvas.addEventListener("mousemove", (event) => {
+        if (document.pointerLockElement !== canvas) return;
+        player.yaw += event.movementX * 0.0024;
+        player.pitch = Math.max(-1.35, Math.min(1.25, player.pitch - event.movementY * 0.0024));
+      });
+
+      canvas.addEventListener("mousedown", (event) => {
+        if (document.pointerLockElement !== canvas) {
+          canvas.requestPointerLock();
+          promptEl.classList.add("hidden");
+          return;
+        }
+        if (event.button === 0) mine();
+        if (event.button === 2) place();
+      });
+
+      canvas.addEventListener("contextmenu", (event) => event.preventDefault());
+
+      document.addEventListener("pointerlockchange", () => {
+        promptEl.classList.toggle("hidden", document.pointerLockElement === canvas);
+      });
+
+      startBtn.addEventListener("click", () => {
+        canvas.requestPointerLock();
+        promptEl.classList.add("hidden");
+      });
+
+      generateWorld();
+      buildHotbar();
+      requestAnimationFrame(tick);
+    })();
+  </script>
+</body>
+</html>
