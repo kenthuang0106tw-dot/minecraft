@@ -101,6 +101,22 @@
       font-variant-numeric: tabular-nums;
     }
 
+    .healthbar {
+      width: 112px;
+      height: 10px;
+      border: 1px solid rgba(255,255,255,0.28);
+      border-radius: 999px;
+      background: rgba(0,0,0,0.28);
+      overflow: hidden;
+    }
+
+    .healthfill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #d83d3d, #ffb34d);
+      transition: width 140ms ease;
+    }
+
     .hotbar {
       position: absolute;
       left: 50%;
@@ -380,6 +396,44 @@
         linear-gradient(135deg, #7a1f18, var(--c));
       box-shadow: 0 0 12px rgba(255,116,33,0.72), inset 0 -8px rgba(0,0,0,0.18);
     }
+
+    .shape-sword {
+      background: transparent;
+      box-shadow: none;
+    }
+
+    .shape-sword::before {
+      content: "";
+      position: absolute;
+      left: 15px;
+      top: 1px;
+      width: 6px;
+      height: 25px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.42), var(--c), rgba(0,0,0,0.24));
+      transform: rotate(42deg);
+      transform-origin: 50% 85%;
+    }
+
+    .shape-sword::after {
+      content: "";
+      position: absolute;
+      left: 10px;
+      top: 21px;
+      width: 19px;
+      height: 5px;
+      border-radius: 2px;
+      background: #5b3a24;
+      transform: rotate(42deg);
+    }
+
+    .shape-armor {
+      background:
+        linear-gradient(90deg, transparent 0 18%, rgba(0,0,0,0.22) 19% 25%, transparent 26% 74%, rgba(0,0,0,0.22) 75% 81%, transparent 82%),
+        linear-gradient(180deg, rgba(255,255,255,0.28), transparent 38%),
+        var(--c);
+      clip-path: polygon(28% 5%, 72% 5%, 94% 28%, 78% 96%, 22% 96%, 6% 28%);
+    }
     .prompt {
       position: absolute;
       left: 50%;
@@ -551,6 +605,8 @@
       <span class="brand">Blocklands</span>
       <span class="metric" id="pos">0 0 0</span>
       <span class="metric" id="fps">60 fps</span>
+      <span class="metric" id="gear">hands / cloth</span>
+      <div class="healthbar" title="Health"><div class="healthfill" id="healthFill"></div></div>
     </div>
     <div class="crosshair"></div>
     <div class="hotbar" id="hotbar"></div>
@@ -571,13 +627,14 @@
       <div class="look-zone" id="lookZone"></div>
       <div class="touch-actions">
         <button class="touch-button" id="jumpBtn" type="button">Jump</button>
+        <button class="touch-button" id="attackBtn" type="button">Hit</button>
         <button class="touch-button" id="mineBtn" type="button">Mine</button>
         <button class="touch-button" id="placeBtn" type="button">Place</button>
       </div>
     </div>
     <div class="prompt" id="prompt">
       <h1>Blocklands</h1>
-      <p>Desktop: WASD to move, Space to jump, left click to mine, right click to place. Phone: use the left stick to move, drag the right side to look, then tap Jump, Mine, or Place.</p>
+      <p>Desktop: WASD to move, Space to jump, left click to hit or mine, right click to place, F to attack. Phone: use the left stick to move, drag the right side to look, then tap Jump, Hit, Mine, or Place.</p>
       <button id="start">Start</button>
     </div>
   </div>
@@ -590,6 +647,8 @@
       const ctx = canvas.getContext("2d", { alpha: false });
       const posEl = document.getElementById("pos");
       const fpsEl = document.getElementById("fps");
+      const gearEl = document.getElementById("gear");
+      const healthFillEl = document.getElementById("healthFill");
       const promptEl = document.getElementById("prompt");
       const startBtn = document.getElementById("start");
       const hotbarEl = document.getElementById("hotbar");
@@ -602,6 +661,7 @@
       const stickKnob = document.getElementById("stickKnob");
       const lookZone = document.getElementById("lookZone");
       const jumpBtn = document.getElementById("jumpBtn");
+      const attackBtn = document.getElementById("attackBtn");
       const mineBtn = document.getElementById("mineBtn");
       const placeBtn = document.getElementById("placeBtn");
       const isTouch = matchMedia("(hover: none), (pointer: coarse)").matches;
@@ -634,6 +694,8 @@
       }
 
       function shapeForName(name) {
+        if (/sword|staff/.test(name)) return "sword";
+        if (/armor/.test(name)) return "armor";
         if (/candle/.test(name)) return "candle";
         if (/lamp|lantern|torch|glowing/.test(name)) return "lamp";
         if (/ore|gem/.test(name)) return "ore";
@@ -769,8 +831,34 @@
         block("water tile", [44, 116, 178], [66, 154, 219]),
         block("lava tile", [191, 74, 28], [255, 129, 40], 0.5)
       ];
-      const blocks = [null, ...baseBlocks, ...extraBlocks];
+      function weapon(name, color, damage, range) {
+        return { name, color, top: color, shape: "sword", itemType: "weapon", damage, range };
+      }
+
+      function armor(name, color, defense) {
+        return { name, color, top: color, shape: "armor", itemType: "armor", defense };
+      }
+
+      const equipmentItems = [
+        weapon("wood sword", [142, 95, 49], 3, 3.1),
+        weapon("stone sword", [132, 137, 141], 4, 3.2),
+        weapon("iron sword", [197, 201, 202], 5, 3.4),
+        weapon("gold sword", [235, 184, 58], 4, 3.5),
+        weapon("diamond sword", [81, 210, 220], 7, 3.7),
+        weapon("amethyst staff", [160, 97, 214], 6, 4.4),
+        armor("leather armor", [120, 78, 45], 1),
+        armor("chain armor", [143, 150, 151], 2),
+        armor("iron armor", [190, 194, 195], 3),
+        armor("gold armor", [232, 183, 63], 2),
+        armor("diamond armor", [93, 218, 226], 5)
+      ];
+
+      const blocks = [null, ...baseBlocks, ...extraBlocks, ...equipmentItems];
       const blockIds = new Map(blocks.map((item, index) => item ? [item.name, index] : null).filter(Boolean));
+      const gear = {
+        weapon: blockIds.get("wood sword"),
+        armor: blockIds.get("leather armor")
+      };
 
       function idOf(name, fallback) {
         return blockIds.get(name) || fallback;
@@ -790,14 +878,17 @@
         vz: 0,
         yaw: -Math.PI / 2,
         pitch: -0.16,
-        grounded: false
+        grounded: false,
+        health: 20,
+        maxHealth: 20,
+        invulnerable: 0
       };
       const enemyTypes = [
-        { name: "Moss Creeper", body: [62, 142, 78], eye: [255, 235, 120], speed: 1.1, size: 0.95, mode: "stalk" },
-        { name: "Cave Imp", body: [130, 58, 72], eye: [255, 190, 72], speed: 1.7, size: 0.72, mode: "dart" },
-        { name: "Stone Guard", body: [98, 104, 113], eye: [105, 220, 240], speed: 0.75, size: 1.22, mode: "heavy" },
-        { name: "Glow Wisp", body: [88, 195, 220], eye: [255, 255, 210], speed: 1.45, size: 0.78, mode: "fly" },
-        { name: "Bramble Boar", body: [116, 82, 48], eye: [255, 246, 160], speed: 1.25, size: 1.05, mode: "charge" }
+        { name: "Moss Creeper", body: [62, 142, 78], eye: [255, 235, 120], speed: 1.1, size: 0.95, mode: "stalk", damage: 3 },
+        { name: "Cave Imp", body: [130, 58, 72], eye: [255, 190, 72], speed: 1.7, size: 0.72, mode: "dart", damage: 2 },
+        { name: "Stone Guard", body: [98, 104, 113], eye: [105, 220, 240], speed: 0.75, size: 1.22, mode: "heavy", damage: 4 },
+        { name: "Glow Wisp", body: [88, 195, 220], eye: [255, 255, 210], speed: 1.45, size: 0.78, mode: "fly", damage: 2 },
+        { name: "Bramble Boar", body: [116, 82, 48], eye: [255, 246, 160], speed: 1.25, size: 1.05, mode: "charge", damage: 3 }
       ];
       const enemies = [];
 
@@ -1021,6 +1112,7 @@
               vy: 0,
               wander: hash(x, y) * Math.PI * 2,
               clock: hash(y, x) * 10,
+              attackCooldown: 0,
               hp: type.mode === "heavy" ? 4 : 2
             });
             placed++;
@@ -1032,6 +1124,7 @@
         enemies.forEach((enemy) => {
           const type = enemyTypes[enemy.typeIndex];
           enemy.clock += dt;
+          enemy.attackCooldown = Math.max(0, enemy.attackCooldown - dt);
           const dx = player.x - enemy.x;
           const dy = player.y - enemy.y;
           const dist = Math.hypot(dx, dy) || 1;
@@ -1059,10 +1152,9 @@
           }
           enemy.z += (targetZ - enemy.z) * Math.min(1, dt * 5);
 
-          if (dist < type.size + 0.42 && Math.abs(player.z - enemy.z) < 2.1) {
-            player.vx += (dx / dist) * 2.1 * dt;
-            player.vy += (dy / dist) * 2.1 * dt;
-            player.vz = Math.max(player.vz, 1.2);
+          if (dist < type.size + 0.48 && Math.abs(player.z - enemy.z) < 2.1 && enemy.attackCooldown <= 0) {
+            damagePlayer(type.damage, enemy.x, enemy.y);
+            enemy.attackCooldown = 1.15;
           }
         });
       }
@@ -1090,22 +1182,31 @@
 
       function buildInventory() {
         inventoryGrid.innerHTML = "";
-        inventoryTitle.textContent = `Items (${blocks.length - 1}) - slot ${selected + 1}`;
+        inventoryTitle.textContent = `Items (${blocks.length - 1}) - slot ${selected + 1} - ${blocks[gear.weapon].name} / ${blocks[gear.armor].name}`;
         for (let id = 1; id < blocks.length; id++) {
+          const itemData = blocks[id];
           const item = document.createElement("button");
-          item.className = `item-cell${hotbar[selected] === id ? " active" : ""}`;
+          const active = hotbar[selected] === id || gear.weapon === id || gear.armor === id;
+          item.className = `item-cell${active ? " active" : ""}`;
           item.type = "button";
-          item.title = blocks[id].name;
+          item.title = itemData.itemType ? `Equip ${itemData.name}` : itemData.name;
           const swatch = makeItemIcon(id, "item-icon");
           const number = document.createElement("span");
           number.className = "item-number";
-          number.textContent = blocks[id].name;
+          number.textContent = itemData.name;
           item.append(swatch, number);
           item.addEventListener("pointerdown", (event) => {
             event.preventDefault();
-            hotbar[selected] = id;
+            if (itemData.itemType === "weapon") {
+              gear.weapon = id;
+            } else if (itemData.itemType === "armor") {
+              gear.armor = id;
+            } else {
+              hotbar[selected] = id;
+            }
             buildHotbar();
             buildInventory();
+            updateHud();
           });
           inventoryGrid.append(item);
         }
@@ -1124,6 +1225,76 @@
         icon.style.setProperty("--c", rgb(item.color));
         icon.style.setProperty("--t", rgb(item.top || item.color));
         return icon;
+      }
+
+      function updateHud() {
+        const weapon = blocks[gear.weapon];
+        const armor = blocks[gear.armor];
+        gearEl.textContent = `${weapon.name} / ${armor.name}`;
+        healthFillEl.style.width = `${Math.max(0, player.health / player.maxHealth) * 100}%`;
+      }
+
+      function respawnPlayer() {
+        player.x = W / 2 + 0.5;
+        player.y = D / 2 + 0.5;
+        player.z = highestSolid(player.x, player.y) + 3;
+        player.vx = player.vy = player.vz = 0;
+        player.health = player.maxHealth;
+        player.invulnerable = 1.2;
+        updateHud();
+      }
+
+      function damagePlayer(amount, sourceX, sourceY) {
+        if (player.invulnerable > 0) return;
+        const armor = blocks[gear.armor];
+        const reduced = Math.max(1, amount - (armor.defense || 0));
+        player.health = Math.max(0, player.health - reduced);
+        player.invulnerable = 0.85;
+        const dx = player.x - sourceX;
+        const dy = player.y - sourceY;
+        const dist = Math.hypot(dx, dy) || 1;
+        player.vx += (dx / dist) * 4.2;
+        player.vy += (dy / dist) * 4.2;
+        player.vz = Math.max(player.vz, 3.2);
+        if (player.health <= 0) respawnPlayer();
+        updateHud();
+      }
+
+      function attackEnemy() {
+        const weapon = blocks[gear.weapon];
+        const damage = weapon.damage || 1;
+        const range = weapon.range || 2.4;
+        const cy = Math.cos(player.yaw);
+        const sy = Math.sin(player.yaw);
+        let best = null;
+        let bestScore = Infinity;
+        enemies.forEach((enemy) => {
+          const dx = enemy.x - player.x;
+          const dy = enemy.y - player.y;
+          const dz = enemy.z - player.z;
+          const dist = Math.hypot(dx, dy, dz);
+          if (dist > range) return;
+          const forward = (dx * cy + dy * sy) / (Math.hypot(dx, dy) || 1);
+          if (forward < 0.58) return;
+          const score = dist - forward;
+          if (score < bestScore) {
+            bestScore = score;
+            best = enemy;
+          }
+        });
+        if (!best) return false;
+        best.hp -= damage;
+        const dx = best.x - player.x;
+        const dy = best.y - player.y;
+        const dist = Math.hypot(dx, dy) || 1;
+        best.x += (dx / dist) * 0.55;
+        best.y += (dy / dist) * 0.55;
+        best.clock += 0.35;
+        if (best.hp <= 0) {
+          const index = enemies.indexOf(best);
+          if (index >= 0) enemies.splice(index, 1);
+        }
+        return true;
       }
 
       function rgb(c) {
@@ -1169,6 +1340,7 @@
       }
 
       function update(dt) {
+        player.invulnerable = Math.max(0, player.invulnerable - dt);
         const forward = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0) - touchMove.y;
         const strafe = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0) + touchMove.x;
         const speed = keys.has("ShiftLeft") ? 8.2 : 5.2;
@@ -1195,6 +1367,8 @@
           player.y = D / 2 + 0.5;
           player.z = 23;
           player.vx = player.vy = player.vz = 0;
+          player.health = Math.max(1, player.health - 2);
+          updateHud();
         }
 
         updateEnemies(dt);
@@ -1404,6 +1578,11 @@
           ctx.lineWidth = 1;
           ctx.strokeRect(RW / 2 - 12, RH / 2 - 12, 24, 24);
         }
+
+        if (player.invulnerable > 0) {
+          ctx.fillStyle = `rgba(210, 35, 35, ${Math.min(0.24, player.invulnerable * 0.18)})`;
+          ctx.fillRect(0, 0, RW, RH);
+        }
       }
 
       function tick(now) {
@@ -1418,10 +1597,12 @@
           fpsClock = now;
         }
         posEl.textContent = `${player.x.toFixed(1)} ${player.y.toFixed(1)} ${player.z.toFixed(1)}`;
+        updateHud();
         requestAnimationFrame(tick);
       }
 
       function mine() {
+        if (attackEnemy()) return;
         if (!target || target.dist > 6) return;
         setBlock(target.x, target.y, target.z, 0);
       }
@@ -1429,6 +1610,7 @@
       function place() {
         if (!target || target.dist > 6) return;
         const id = hotbar[selected];
+        if (blocks[id].itemType) return;
         if (!getBlock(target.px, target.py, target.pz)) {
           setBlock(target.px, target.py, target.pz, id);
           if (collides(player.x, player.y, player.z)) setBlock(target.px, target.py, target.pz, 0);
@@ -1473,6 +1655,7 @@
           selected = Number(event.code.slice(5)) - 1;
           buildHotbar();
         }
+        if (event.code === "KeyF") attackEnemy();
       });
 
       addEventListener("keyup", (event) => keys.delete(event.code));
@@ -1557,6 +1740,12 @@
         event.preventDefault();
         startGame();
         jump();
+      });
+
+      attackBtn.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startGame();
+        attackEnemy();
       });
 
       mineBtn.addEventListener("pointerdown", (event) => {
