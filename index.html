@@ -172,6 +172,7 @@
 
     .inventory-panel {
       position: absolute;
+      display: none;
       left: 50%;
       bottom: 96px;
       width: min(760px, calc(100vw - 28px));
@@ -186,6 +187,10 @@
       pointer-events: auto;
       overflow: hidden;
       z-index: 40;
+    }
+
+    .inventory-panel.open {
+      display: block;
     }
 
     .inventory-head {
@@ -433,7 +438,7 @@
     <div class="crosshair"></div>
     <div class="hotbar" id="hotbar"></div>
     <button class="inventory-toggle" id="inventoryToggle" type="button">Items</button>
-    <div class="inventory-panel hidden" id="inventoryPanel">
+    <div class="inventory-panel" id="inventoryPanel">
       <div class="inventory-head">
         <span id="inventoryTitle">Items</span>
         <button class="inventory-close" id="inventoryClose" type="button" aria-label="Close inventory">×</button>
@@ -556,6 +561,7 @@
       let stickPointer = null;
       let lookPointer = null;
       let lastLook = null;
+      let ignoreInventoryClickUntil = 0;
 
       function idx(x, y, z) {
         return x + y * W + z * W * D;
@@ -681,8 +687,8 @@
       }
 
       function toggleInventory(force) {
-        const shouldOpen = typeof force === "boolean" ? force : inventoryPanel.classList.contains("hidden");
-        inventoryPanel.classList.toggle("hidden", !shouldOpen);
+        const shouldOpen = typeof force === "boolean" ? force : !inventoryPanel.classList.contains("open");
+        inventoryPanel.classList.toggle("open", shouldOpen);
         if (shouldOpen) buildInventory();
       }
 
@@ -1029,10 +1035,39 @@
         place();
       });
 
+      inventoryToggle.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        ignoreInventoryClickUntil = performance.now() + 450;
+        toggleInventory();
+      });
+
+      inventoryToggle.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (performance.now() < ignoreInventoryClickUntil) return;
+        toggleInventory();
+      });
+
+      inventoryClose.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        ignoreInventoryClickUntil = performance.now() + 450;
+        toggleInventory(false);
+      });
+
+      inventoryClose.addEventListener("click", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        if (performance.now() < ignoreInventoryClickUntil) return;
+        toggleInventory(false);
+      });
+
       startBtn.addEventListener("click", startGame);
 
       generateWorld();
       buildHotbar();
+      buildInventory();
       requestAnimationFrame(tick);
     })();
   </script>
