@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-Hant">
 <head>
   <meta charset="utf-8">
@@ -115,6 +115,7 @@
       background: var(--panel);
       box-shadow: 0 14px 38px rgba(0, 0, 0, 0.32);
       backdrop-filter: blur(12px);
+      pointer-events: auto;
     }
 
     .slot {
@@ -194,6 +195,93 @@
     .prompt button:hover { background: #f2d77d; }
     .hidden { display: none; }
 
+    .touch-controls {
+      position: absolute;
+      inset: 0;
+      display: none;
+      pointer-events: none;
+      touch-action: none;
+      user-select: none;
+    }
+
+    .stick-zone {
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 44vw;
+      height: 52vh;
+      pointer-events: auto;
+    }
+
+    .stick {
+      position: absolute;
+      left: 28px;
+      bottom: 84px;
+      width: 112px;
+      height: 112px;
+      border: 1px solid rgba(255, 255, 255, 0.18);
+      border-radius: 50%;
+      background: rgba(13, 18, 24, 0.38);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.24), inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .stick-knob {
+      position: absolute;
+      left: 36px;
+      top: 36px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: rgba(245, 241, 232, 0.82);
+      box-shadow: 0 7px 18px rgba(0, 0, 0, 0.3);
+      transform: translate(0, 0);
+    }
+
+    .look-zone {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 62vw;
+      height: 100vh;
+      pointer-events: auto;
+    }
+
+    .touch-actions {
+      position: absolute;
+      right: 18px;
+      bottom: 88px;
+      display: grid;
+      grid-template-columns: repeat(2, 58px);
+      gap: 10px;
+      pointer-events: auto;
+    }
+
+    .touch-button {
+      width: 58px;
+      height: 58px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      background: rgba(13, 18, 24, 0.46);
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.26);
+      backdrop-filter: blur(10px);
+      touch-action: none;
+    }
+
+    .touch-button:active {
+      background: rgba(231, 200, 107, 0.64);
+      color: #1b1608;
+    }
+
+    @media (hover: none), (pointer: coarse) {
+      canvas { cursor: default; }
+      .touch-controls { display: block; }
+      .hotbar { bottom: 10px; }
+    }
+
     @media (max-width: 560px) {
       .topbar {
         left: 10px;
@@ -232,10 +320,23 @@
     </div>
     <div class="crosshair"></div>
     <div class="hotbar" id="hotbar"></div>
+    <div class="touch-controls" id="touchControls">
+      <div class="stick-zone" id="stickZone">
+        <div class="stick">
+          <div class="stick-knob" id="stickKnob"></div>
+        </div>
+      </div>
+      <div class="look-zone" id="lookZone"></div>
+      <div class="touch-actions">
+        <button class="touch-button" id="jumpBtn" type="button">Jump</button>
+        <button class="touch-button" id="mineBtn" type="button">Mine</button>
+        <button class="touch-button" id="placeBtn" type="button">Place</button>
+      </div>
+    </div>
     <div class="prompt" id="prompt">
       <h1>Blocklands</h1>
-      <p>點一下進入世界。WASD 移動，空白鍵跳躍，滑鼠左鍵挖掘，右鍵放置，1-6 切換方塊。</p>
-      <button id="start">開始</button>
+      <p>Desktop: WASD to move, Space to jump, left click to mine, right click to place. Phone: use the left stick to move, drag the right side to look, then tap Jump, Mine, or Place.</p>
+      <button id="start">Start</button>
     </div>
   </div>
 
@@ -250,6 +351,13 @@
       const promptEl = document.getElementById("prompt");
       const startBtn = document.getElementById("start");
       const hotbarEl = document.getElementById("hotbar");
+      const stickZone = document.getElementById("stickZone");
+      const stickKnob = document.getElementById("stickKnob");
+      const lookZone = document.getElementById("lookZone");
+      const jumpBtn = document.getElementById("jumpBtn");
+      const mineBtn = document.getElementById("mineBtn");
+      const placeBtn = document.getElementById("placeBtn");
+      const isTouch = matchMedia("(hover: none), (pointer: coarse)").matches;
 
       const W = 64;
       const D = 64;
@@ -292,6 +400,10 @@
       let frames = 0;
       let fpsClock = last;
       let target = null;
+      let touchMove = { x: 0, y: 0 };
+      let stickPointer = null;
+      let lookPointer = null;
+      let lastLook = null;
 
       function idx(x, y, z) {
         return x + y * W + z * W * D;
@@ -381,6 +493,11 @@
           key.className = "key";
           key.textContent = String(index + 1);
           slot.append(swatch, key);
+          slot.addEventListener("pointerdown", (event) => {
+            event.preventDefault();
+            selected = index;
+            buildHotbar();
+          });
           hotbarEl.append(slot);
         });
       }
@@ -428,8 +545,8 @@
       }
 
       function update(dt) {
-        const forward = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0);
-        const strafe = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0);
+        const forward = (keys.has("KeyW") ? 1 : 0) - (keys.has("KeyS") ? 1 : 0) - touchMove.y;
+        const strafe = (keys.has("KeyD") ? 1 : 0) - (keys.has("KeyA") ? 1 : 0) + touchMove.x;
         const speed = keys.has("ShiftLeft") ? 8.2 : 5.2;
         const sin = Math.sin(player.yaw);
         const cos = Math.cos(player.yaw);
@@ -592,6 +709,38 @@
         }
       }
 
+      function startGame() {
+        promptEl.classList.add("hidden");
+        if (!isTouch && canvas.requestPointerLock) canvas.requestPointerLock();
+      }
+
+      function jump() {
+        if (player.grounded) {
+          player.vz = 7.2;
+          player.grounded = false;
+        }
+      }
+
+      function stopStick() {
+        stickPointer = null;
+        touchMove = { x: 0, y: 0 };
+        stickKnob.style.transform = "translate(0, 0)";
+      }
+
+      function updateStick(event) {
+        const rect = stickZone.getBoundingClientRect();
+        const cx = rect.left + 84;
+        const cy = rect.bottom - 140;
+        const dx = event.clientX - cx;
+        const dy = event.clientY - cy;
+        const dist = Math.min(42, Math.hypot(dx, dy));
+        const angle = Math.atan2(dy, dx);
+        const x = Math.cos(angle) * dist;
+        const y = Math.sin(angle) * dist;
+        touchMove = { x: x / 42, y: y / 42 };
+        stickKnob.style.transform = `translate(${x}px, ${y}px)`;
+      }
+
       addEventListener("keydown", (event) => {
         keys.add(event.code);
         if (/^Digit[1-6]$/.test(event.code)) {
@@ -611,9 +760,9 @@
       });
 
       canvas.addEventListener("mousedown", (event) => {
+        if (isTouch) return;
         if (document.pointerLockElement !== canvas) {
-          canvas.requestPointerLock();
-          promptEl.classList.add("hidden");
+          startGame();
           return;
         }
         if (event.button === 0) mine();
@@ -623,13 +772,80 @@
       canvas.addEventListener("contextmenu", (event) => event.preventDefault());
 
       document.addEventListener("pointerlockchange", () => {
+        if (isTouch) return;
         promptEl.classList.toggle("hidden", document.pointerLockElement === canvas);
       });
 
-      startBtn.addEventListener("click", () => {
-        canvas.requestPointerLock();
-        promptEl.classList.add("hidden");
+      stickZone.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startGame();
+        stickPointer = event.pointerId;
+        stickZone.setPointerCapture(event.pointerId);
+        updateStick(event);
       });
+
+      stickZone.addEventListener("pointermove", (event) => {
+        if (event.pointerId === stickPointer) updateStick(event);
+      });
+
+      stickZone.addEventListener("pointerup", (event) => {
+        if (event.pointerId === stickPointer) stopStick();
+      });
+
+      stickZone.addEventListener("pointercancel", (event) => {
+        if (event.pointerId === stickPointer) stopStick();
+      });
+
+      lookZone.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startGame();
+        lookPointer = event.pointerId;
+        lastLook = { x: event.clientX, y: event.clientY };
+        lookZone.setPointerCapture(event.pointerId);
+      });
+
+      lookZone.addEventListener("pointermove", (event) => {
+        if (event.pointerId !== lookPointer || !lastLook) return;
+        const dx = event.clientX - lastLook.x;
+        const dy = event.clientY - lastLook.y;
+        lastLook = { x: event.clientX, y: event.clientY };
+        player.yaw += dx * 0.006;
+        player.pitch = Math.max(-1.35, Math.min(1.25, player.pitch - dy * 0.006));
+      });
+
+      lookZone.addEventListener("pointerup", (event) => {
+        if (event.pointerId === lookPointer) {
+          lookPointer = null;
+          lastLook = null;
+        }
+      });
+
+      lookZone.addEventListener("pointercancel", (event) => {
+        if (event.pointerId === lookPointer) {
+          lookPointer = null;
+          lastLook = null;
+        }
+      });
+
+      jumpBtn.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startGame();
+        jump();
+      });
+
+      mineBtn.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startGame();
+        mine();
+      });
+
+      placeBtn.addEventListener("pointerdown", (event) => {
+        event.preventDefault();
+        startGame();
+        place();
+      });
+
+      startBtn.addEventListener("click", startGame);
 
       generateWorld();
       buildHotbar();
@@ -638,3 +854,4 @@
   </script>
 </body>
 </html>
+
