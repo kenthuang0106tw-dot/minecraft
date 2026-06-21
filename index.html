@@ -245,7 +245,7 @@
     .item-swatch {
       position: absolute;
       left: 50%;
-      top: 9px;
+      top: 6px;
       width: 30px;
       height: 30px;
       border-radius: 4px;
@@ -256,7 +256,7 @@
     .item-number {
       position: absolute;
       left: 4px;
-      bottom: 3px;
+      bottom: 4px;
       right: 4px;
       overflow: hidden;
       text-align: center;
@@ -516,25 +516,126 @@
         return [Math.round((r + m) * 255), Math.round((g + m) * 255), Math.round((b + m) * 255)];
       }
 
+      function block(name, color, top = null, glow = 0) {
+        return { name, color, top: top || color, glow };
+      }
+
       const baseBlocks = [
-        { name: "grass", color: [74, 156, 76], top: [112, 184, 79] },
-        { name: "dirt", color: [122, 86, 52] },
-        { name: "stone", color: [120, 124, 128] },
-        { name: "wood", color: [132, 91, 47] },
-        { name: "leaf", color: [48, 127, 72] },
-        { name: "sand", color: [213, 192, 124] },
-        { name: "brick", color: [158, 76, 61] }
+        block("grass block", [74, 156, 76], [112, 184, 79]),
+        block("dirt", [122, 86, 52]),
+        block("stone", [120, 124, 128]),
+        block("oak log", [132, 91, 47], [154, 112, 62]),
+        block("leaf block", [48, 127, 72], [62, 150, 81]),
+        block("sand", [213, 192, 124]),
+        block("brick block", [158, 76, 61])
       ];
-      const itemFamilies = ["clay", "glass", "tile", "ore", "moss", "ice", "metal", "wool", "slate", "coral", "gem", "plank"];
-      const extraBlocks = Array.from({ length: 113 }, (_, index) => {
-        const id = index + 8;
-        const hue = (id * 47) % 360;
-        const sat = 0.42 + ((id % 5) * 0.08);
-        const light = 0.36 + ((id % 7) * 0.045);
-        const color = hslToRgb(hue, sat, light);
-        const top = hslToRgb((hue + 14) % 360, Math.min(0.82, sat + 0.08), Math.min(0.72, light + 0.08));
-        return { name: `${itemFamilies[index % itemFamilies.length]} ${id}`, color, top };
-      });
+
+      const palette = [
+        ["white", 42, 43, 39], ["light gray", 215, 0.1, 0.68], ["gray", 215, 0.08, 0.42],
+        ["black", 220, 0.12, 0.13], ["brown", 28, 0.5, 0.33], ["red", 0, 0.62, 0.47],
+        ["orange", 28, 0.74, 0.52], ["yellow", 49, 0.78, 0.58], ["lime", 92, 0.54, 0.49],
+        ["green", 132, 0.46, 0.36], ["cyan", 182, 0.55, 0.45], ["light blue", 202, 0.64, 0.58],
+        ["blue", 224, 0.58, 0.43], ["purple", 272, 0.48, 0.48], ["magenta", 306, 0.56, 0.53],
+        ["pink", 334, 0.64, 0.63]
+      ];
+
+      function coloredSet(suffix, satBoost, lightBoost, glow = 0) {
+        return palette.map(([name, hue, sat, light]) => {
+          const color = hslToRgb(hue, Math.min(0.9, sat + satBoost), Math.min(0.82, light + lightBoost));
+          const top = hslToRgb((hue + 9) % 360, Math.min(0.92, sat + satBoost + 0.06), Math.min(0.88, light + lightBoost + 0.05));
+          return block(`${name} ${suffix}`, color, top, glow);
+        });
+      }
+
+      const extraBlocks = [
+        block("oak planks", [156, 119, 69], [178, 137, 82]),
+        block("birch planks", [206, 184, 119], [226, 205, 139]),
+        block("spruce planks", [101, 70, 42], [126, 88, 53]),
+        block("jungle planks", [164, 104, 61], [186, 124, 77]),
+        block("acacia planks", [184, 92, 49], [207, 112, 64]),
+        block("dark oak planks", [72, 46, 28], [94, 60, 36]),
+        block("mangrove planks", [126, 52, 47], [151, 66, 58]),
+        block("cherry planks", [218, 151, 162], [239, 174, 185]),
+        block("bamboo plank", [178, 161, 73], [203, 185, 92]),
+        block("palm planks", [151, 109, 61], [176, 130, 77]),
+        block("oak leaves", [52, 137, 67], [72, 159, 82]),
+        block("pine needles", [38, 102, 73], [50, 123, 87]),
+        block("flowering leaves", [93, 144, 80], [210, 121, 154]),
+        block("moss block", [73, 118, 54], [91, 143, 65]),
+        block("mossy stone", [92, 107, 88], [105, 128, 93]),
+        block("cobblestone", [101, 104, 106], [124, 127, 129]),
+        block("smooth stone", [146, 149, 151], [164, 166, 168]),
+        block("granite", [142, 88, 73], [166, 106, 88]),
+        block("polished granite", [172, 104, 86], [190, 122, 101]),
+        block("diorite", [188, 188, 181], [209, 209, 202]),
+        block("polished diorite", [215, 214, 206], [232, 231, 224]),
+        block("andesite", [116, 121, 121], [137, 142, 142]),
+        block("polished andesite", [145, 149, 148], [163, 168, 166]),
+        block("slate", [64, 70, 82], [82, 90, 103]),
+        block("deep slate", [45, 48, 57], [60, 63, 73]),
+        block("marble", [210, 206, 194], [232, 228, 216]),
+        block("limestone", [181, 174, 143], [203, 196, 163]),
+        block("basalt", [46, 47, 51], [62, 63, 67]),
+        block("obsidian", [30, 25, 49], [51, 41, 82]),
+        block("coal ore", [74, 76, 78], [44, 45, 47]),
+        block("iron ore", [133, 104, 82], [188, 148, 111]),
+        block("copper ore", [102, 117, 104], [199, 121, 72]),
+        block("gold ore", [128, 109, 63], [234, 185, 62]),
+        block("red gem ore", [92, 66, 70], [215, 50, 61]),
+        block("lapis ore", [55, 74, 121], [63, 97, 184]),
+        block("emerald ore", [70, 111, 84], [50, 205, 114]),
+        block("diamond ore", [78, 124, 133], [91, 218, 224]),
+        block("amethyst block", [119, 82, 159], [158, 112, 210]),
+        block("quartz block", [220, 211, 194], [241, 235, 219]),
+        block("iron block", [183, 184, 178], [211, 212, 207]),
+        block("copper block", [184, 103, 62], [211, 126, 75]),
+        block("aged copper", [75, 150, 135], [91, 177, 158]),
+        block("gold block", [229, 174, 47], [250, 205, 75]),
+        block("emerald block", [34, 176, 91], [55, 212, 116]),
+        block("diamond block", [82, 206, 213], [124, 236, 241]),
+        block("glass block", [164, 207, 218], [190, 229, 238]),
+        block("clear ice", [126, 179, 222], [164, 211, 241]),
+        block("packed ice", [85, 145, 210], [111, 176, 235]),
+        block("snow block", [232, 237, 239], [250, 253, 255]),
+        block("mud block", [75, 58, 48], [96, 75, 62]),
+        block("clay block", [133, 145, 153], [155, 166, 174]),
+        block("hay bale", [196, 158, 52], [224, 190, 72]),
+        block("bookshelf", [130, 89, 48], [183, 151, 91]),
+        block("crafting block", [128, 88, 52], [171, 125, 70]),
+        block("barrel", [111, 77, 44], [143, 101, 58]),
+        block("crate", [151, 100, 57], [181, 123, 73]),
+        block("paper lantern", [223, 179, 112], [255, 219, 152], 0.35),
+        block("camp lantern", [86, 73, 56], [248, 185, 83], 0.55),
+        block("glow lamp", [190, 144, 66], [255, 215, 103], 0.65),
+        block("sea lamp", [117, 191, 184], [180, 241, 229], 0.55),
+        block("redstone lamp", [108, 69, 45], [235, 126, 57], 0.5),
+        block("soul lamp", [54, 122, 150], [88, 209, 236], 0.55),
+        block("torch block", [136, 79, 42], [255, 173, 68], 0.45),
+        block("candle cluster", [229, 216, 185], [255, 238, 200], 0.32),
+        block("black candle", [41, 39, 43], [79, 74, 80], 0.18),
+        block("red candle", [156, 49, 52], [214, 74, 77], 0.25),
+        block("blue candle", [49, 80, 159], [75, 119, 218], 0.25),
+        block("green candle", [58, 131, 70], [82, 170, 91], 0.25),
+        block("purple candle", [121, 70, 153], [165, 99, 203], 0.25),
+        block("yellow candle", [215, 179, 65], [246, 214, 91], 0.25),
+        block("pumpkin lamp", [204, 111, 40], [255, 167, 55], 0.42),
+        block("glowing mushroom", [116, 54, 114], [238, 119, 213], 0.36),
+        ...coloredSet("wool", 0.04, 0.06),
+        ...coloredSet("glass", -0.08, 0.18),
+        ...coloredSet("concrete", 0.1, -0.02),
+        ...coloredSet("terracotta", -0.06, -0.08),
+        ...coloredSet("candle", 0.02, 0.08, 0.22),
+        block("cactus", [45, 134, 71], [62, 158, 84]),
+        block("reed bundle", [106, 158, 67], [137, 187, 83]),
+        block("flower pot", [142, 73, 50], [166, 88, 60]),
+        block("rose bush", [67, 130, 73], [210, 59, 82]),
+        block("blue flower bed", [62, 122, 89], [82, 105, 224]),
+        block("coral pink", [218, 93, 117], [241, 123, 145]),
+        block("coral blue", [66, 129, 188], [88, 161, 221]),
+        block("coral yellow", [218, 179, 71], [244, 211, 97]),
+        block("water tile", [44, 116, 178], [66, 154, 219]),
+        block("lava tile", [191, 74, 28], [255, 129, 40], 0.5)
+      ];
       const blocks = [null, ...baseBlocks, ...extraBlocks];
 
       const hotbar = [1, 2, 3, 4, 5, 6];
@@ -674,7 +775,7 @@
           swatch.style.background = rgb(blocks[id].top || blocks[id].color);
           const number = document.createElement("span");
           number.className = "item-number";
-          number.textContent = String(id);
+          number.textContent = blocks[id].name;
           item.append(swatch, number);
           item.addEventListener("pointerdown", (event) => {
             event.preventDefault();
@@ -858,7 +959,8 @@
             const faceShade = hit.face === 0 ? 0.72 : hit.face === 1 ? 0.62 : 0.94;
             const fog = Math.max(0.34, 1 - hit.dist / maxDist);
             const checker = ((hit.x + hit.y + hit.z) & 1) ? 0.95 : 1.04;
-            ctx.fillStyle = shade(base, faceShade * fog * checker);
+            const glow = block.glow || 0;
+            ctx.fillStyle = shade(base, Math.min(1.35, faceShade * fog * checker + glow));
             ctx.fillRect(x, y, step + 1, step + 1);
           }
         }
